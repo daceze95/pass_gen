@@ -1,55 +1,110 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import React, { useContext } from 'react';
+import { Image, StyleSheet, Button, Platform, TouchableOpacity } from 'react-native';
+import Toast from 'react-native-toast-message';
+import { AnimatedCircularProgress } from 'react-native-circular-progress';
+import { useState, useEffect } from 'react';
+import * as Clipboard from 'expo-clipboard';
 
-import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import UsePassword from '@/components/UsePasswordModal';
+import UseForm from '@/components/UseForm';
+import { maskPassword } from '../../utils/index';
+import { PasswordContext } from '@/Context';
 
 export default function HomeScreen() {
+  const { setPassword, copyToClipboard} = useContext(PasswordContext);
+  const [generatedPassword, setGeneratedPassword] = useState('');
+  // const [_copiedText, setCopiedText] = useState('');
+  const [progress, setProgress] = useState(0);
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+  const ALLOWED_CHAR = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890@#$!%*&=".split('');
+  let passwordLen = 8;
+
+  const generatePassword = () => {
+    let finalPassword = "";
+
+    while (finalPassword.length < passwordLen) {
+      let randIndex = Math.floor(Math.random() * (ALLOWED_CHAR.length - 1));
+      finalPassword += ALLOWED_CHAR[randIndex];
+    };
+
+    setGeneratedPassword(finalPassword);
+  }
+
+  useEffect(() => {
+    generatePassword();
+    const passwordTimer = setInterval(() => { generatePassword(); setProgress(0); }, 30000);
+
+    const progressTimer = setInterval(() => {
+      setProgress((prev) => (prev >= 100 ? 0 : prev + 3.33)); // Reset at 100%
+    }, 1000); // Increase every second
+
+    return () => { clearInterval(passwordTimer); clearInterval(progressTimer); }
+  }, []);
+
+  // const copyToClipboard = async () => {
+  //   await Clipboard.setStringAsync(generatedPassword);
+  //   await fetchCopiedText();
+  //   // Show a toast
+  //   Toast.show({
+  //     type: 'success',
+  //     text1: 'Copied!',
+  //   });
+
+  // };
+
+  // const fetchCopiedText = async () => {
+  //   const text = await Clipboard.getStringAsync();
+  //   setCopiedText(text);
+  //   setPassword(maskPassword(text), text);
+  // };
+
+  const onUsePassword = () => {
+    setIsModalVisible(true);
+  };
+
+  const onModalClose = () => {
+    setIsModalVisible(false);
+  };
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
       headerImage={
         <Image
-          source={require('@/assets/images/partial-react-logo.png')}
+          source={require('@/assets/images/afriex_logo.png')}
           style={styles.reactLogo}
         />
       }>
+
       <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
+        <ThemedText type="title">Password Generator</ThemedText>
       </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
+
+      <ThemedView style={styles.displayContainer}>
+        <TouchableOpacity style={styles.stepContainer} onPress={() => {copyToClipboard(generatedPassword); onUsePassword();}}>
+          <ThemedView >
+            <ThemedText type="defaultSemiBold"> {generatedPassword} </ThemedText>
+          </ThemedView>
+        </TouchableOpacity>
+        <ThemedView style={styles.animCircularCtn}>
+          <AnimatedCircularProgress
+            size={80}
+            width={10}
+            fill={progress} // Progress value
+            tintColor="#3498db" // Progress color
+            backgroundColor="#e0e0e0"
+          >
+            {() => <ThemedText type='default' >{`${progress.toFixed(2)}%`}</ThemedText>}
+          </AnimatedCircularProgress>
+        </ThemedView>
       </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
+      <UsePassword isVisible={isModalVisible} onClose={onModalClose}>
+        {/* use password form will go here*/}
+        <UseForm/>
+      </UsePassword>
     </ParallaxScrollView>
   );
 }
@@ -61,8 +116,14 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   stepContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
+    width: '50%',
+    borderRightWidth: 1,
     marginBottom: 8,
+    height: '100%',
   },
   reactLogo: {
     height: 178,
@@ -71,4 +132,17 @@ const styles = StyleSheet.create({
     left: 0,
     position: 'absolute',
   },
+  displayContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderRadius: 10,
+    overflow: 'hidden'
+  },
+  animCircularCtn: {
+    display: 'flex',
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  }
 });
