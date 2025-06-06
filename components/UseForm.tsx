@@ -31,10 +31,10 @@ const UseForm = () => {
     const [isSaving, setIsSaving] = useState(false);
 
     const handleChange = (name: string, value: string) => {
-        setFormData({
+        setFormData( formData => ({
             ...formData,
             [name]: value,
-        });
+        }));
 
         // Clear error when user types
         if (errors.description) {

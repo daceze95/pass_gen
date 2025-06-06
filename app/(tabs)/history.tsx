@@ -1,42 +1,55 @@
 import React, { useContext, useEffect, useState } from "react";
-import { StyleSheet, Image, Platform, TouchableOpacity } from 'react-native';
+import { StyleSheet, Image, Platform, TouchableOpacity } from "react-native";
 
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+import { Collapsible } from "@/components/Collapsible";
+import { ExternalLink } from "@/components/ExternalLink";
+import ParallaxScrollView from "@/components/ParallaxScrollView";
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
+import { IconSymbol } from "@/components/ui/IconSymbol";
 import { PasswordContext } from "@/Context";
 
-interface HistoryProps { id: number; masked: string; unMasked: string; description: string; activeDays: string };
+interface HistoryProps {
+  id: number;
+  masked: string;
+  unMasked: string;
+  description: string;
+  activeDays: string;
+}
 
 export default function TabTwoScreen() {
-  const { masked, unMasked, description, copyToClipboard } = useContext(PasswordContext);
-  const [history, setHistory] = useState<HistoryProps[]>([{ id: 0, masked: '', unMasked: '', description: '', activeDays: '' }]);
+  const { masked, unMasked, description, copyToClipboard } =
+    useContext(PasswordContext);
+  const [history, setHistory] = useState<HistoryProps[]>([]);
 
-  useEffect( () => {
+  useEffect(() => {
     if (masked && unMasked && description) {
-      const newHistory = {
-        id: history.length + 1,
-        masked,
-        unMasked,
-        description,
-        activeDays: new Date().getUTCDate().toString()
-      }
-      setHistory(history => {
-        const exists = history.some(
-          entry => entry.masked === masked && entry.unMasked === unMasked && entry.description === description
+      setHistory((prevHistory) => {
+        const key = `${masked}-${unMasked}-${description}`
+        const exists = prevHistory.some(
+          (entry) =>
+            `${entry.masked}-${entry.unMasked}-${entry.description}` === key
         );
-  
-        return exists ? history : [...history, newHistory];
+
+        if (exists) return prevHistory;
+
+        const newHistory = {
+          id: Date.now(),
+          masked,
+          unMasked,
+          description,
+          activeDays: new Date().getUTCDate().toString(),
+        };
+
+        return [newHistory, ...prevHistory];
       });
     }
-  }, [masked, unMasked, description])
+    // console.log(history)
+  }, [masked, unMasked, description]);
 
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
+      headerBackgroundColor={{ light: "#D0D0D0", dark: "#353636" }}
       headerImage={
         <IconSymbol
           size={310}
@@ -44,7 +57,8 @@ export default function TabTwoScreen() {
           name="chevron.left.forwardslash.chevron.right"
           style={styles.headerImage}
         />
-      }>
+      }
+    >
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">History</ThemedText>
       </ThemedView>
@@ -60,38 +74,43 @@ export default function TabTwoScreen() {
             </ThemedView>
 
             {/* Table Rows */}
-            {history.map( hist => (
-              <TouchableOpacity key={hist.id} onPress={() => copyToClipboard(hist.unMasked)}>
+            {history.map((hist) => (
+              <TouchableOpacity
+                key={hist.id}
+                onPress={() => copyToClipboard(hist.unMasked)}
+              >
                 <ThemedView style={styles.row}>
-                  <ThemedText style={styles.cell}>{hist.masked}</ThemedText>
-                  <ThemedText style={styles.cell}>{hist.description}</ThemedText>
+                  <ThemedText style={styles.cell}>
+                    {hist.id}
+                    {hist.masked}
+                  </ThemedText>
+                  <ThemedText style={styles.cell}>
+                    {hist.description}
+                  </ThemedText>
                   <ThemedText style={styles.cell}>{hist.activeDays}</ThemedText>
                 </ThemedView>
               </TouchableOpacity>
             ))}
           </ThemedView>
         </ThemedView>
-
       ) : (
         <ThemedView>
           <ThemedText>Your history is empty...</ThemedText>
         </ThemedView>
       )}
-
-
     </ParallaxScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   headerImage: {
-    color: '#808080',
+    color: "#808080",
     bottom: -90,
     left: -35,
-    position: 'absolute',
+    position: "absolute",
   },
   titleContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 8,
   },
   tableContainer: {
@@ -121,4 +140,3 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 });
-

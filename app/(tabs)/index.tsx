@@ -91,13 +91,13 @@ export default function HomeScreen() {
         </TouchableOpacity>
         <ThemedView style={styles.animCircularCtn}>
           <AnimatedCircularProgress
-            size={80}
+            size={20}
             width={10}
             fill={progress} // Progress value
             tintColor="#3498db" // Progress color
             backgroundColor="#e0e0e0"
           >
-            {() => <ThemedText type='default' >{`${progress.toFixed(2)}%`}</ThemedText>}
+            {/* {() => <ThemedText type='default' >{`${progress.toFixed(2)}%`}</ThemedText>} */}
           </AnimatedCircularProgress>
         </ThemedView>
       </ThemedView>
